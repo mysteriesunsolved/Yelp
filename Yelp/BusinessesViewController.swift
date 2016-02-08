@@ -8,23 +8,29 @@
 
 import UIKit
 
-class BusinessesViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
+class BusinessesViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, UISearchBarDelegate {
 
     var businesses: [Business]!
+    var filteredData: [Business] = []
     
     @IBOutlet var tableView: UITableView!
     
+    @IBOutlet var searchBar: UISearchBar!
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
         tableView.dataSource = self
         tableView.delegate = self
+        searchBar.delegate = self
         tableView.rowHeight = UITableViewAutomaticDimension
         tableView.estimatedRowHeight = 120
+        
+        navigationItem.titleView = searchBar
 
         Business.searchWithTerm("Thai", completion: { (businesses: [Business]!, error: NSError!) -> Void in
             self.businesses = businesses
+            self.filteredData = self.businesses
             self.tableView.reloadData()
             
             
@@ -55,8 +61,8 @@ class BusinessesViewController: UIViewController, UITableViewDataSource, UITable
     }
     
     func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        if businesses != nil {
-            return businesses.count
+        if businesses != nil && businesses == filteredData {
+            return filteredData.count
         } else {
             return 0
         }
@@ -65,9 +71,20 @@ class BusinessesViewController: UIViewController, UITableViewDataSource, UITable
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCellWithIdentifier("BusinessCell", forIndexPath: indexPath) as! BusinessCell
         
-        cell.business = businesses[indexPath.row]
+        cell.business = filteredData[indexPath.row]
         
         return cell
+    }
+    
+    func searchBar(searchBar: UISearchBar, textDidChange searchText: String) {
+        
+        filteredData = searchText.isEmpty ? businesses : businesses!.filter({(business: Business) -> Bool in
+            
+            let name = business.name
+            
+            return name!.rangeOfString(searchText, options: .CaseInsensitiveSearch) != nil
+        })
+
     }
 
     /*
